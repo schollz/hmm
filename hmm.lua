@@ -17,20 +17,75 @@ local file1="/home/we/dust/code/hmm/beats16_bpm150_Ultimate_Jack_Loops_014__BPM_
 
 function init()
   ooo.init(1)
-  ooo.load(file1)
+  
+  -- testing purposes
+  ooo.load(1,file1)
+  ooo.slew(1,0.01)
+  current_file_duration=file_duration(file1)
+  params:set("clock_tempo",150)
+  
 
-  slices=s{1,2,3,4,5,6,7,8}
+  num_slices=16
+  slices=s{s{1,1,1},1,2,3,s{2,4},5,6,7,8,s{9,1,2},10,s{11,13},12,13,14,15,16}
+  rate_seq=s{s{1}:count(16),s{-1,0.5,1},1,1,s{1,0.95,0.9,0.85,0.8,0.75,0.7,0.65,0.6,0.55,0.5,0.45,0.4}:all(),s{1}:count(16),s{-1}:count(4)}
+  trigger_division_seq=s{s{1/4}:count(8),s{1/16}:count(8),s{1/4}:count(12),s{1/32}:count(20)}
+  step_division_seq=s{s{1/4}:count(12),s{1/16}:count(8),s{1/4}:count(4),s{1/2}:count(4),s{1/32}:count(12)}
+  
   divisions={1/32,1/16,1/8,1/4,1/2,1,2}
-  rates={1/8,1/4,1/2,1,2,4}
-  local duration=file_duration(file1)
+  divisions_string={}
+  for _, r in ipairs(divisions) do
+    local s=r
+    if r<1 then 
+      s="1/"..math.floor(1/r)
+    end
+    table.insert(divisions_string,s)
+  end
+  rates={1/16,1/8,1/4,1/2,1,2,4}
+  rates_string={}
+  for _, r in ipairs(rates) do
+    local s=r
+    if r<1 then 
+      s="1/"..math.floor(1/r)
+    end
+    table.insert(rates_string,s)
+  end
+  
 
   lattice=lattice_:new()
-  pattern=lattice:new_pattern{
+  pos_current=0
+  pattern_step=lattice:new_pattern{
     action=function(t)
-
+      pos_current=(slices()-1)/(num_slices)*current_file_duration
+      pattern_step:set_division(step_division_seq())
     end,
-    division=1/8,
+    division=1/4,
   }
+  pattern_trigger=lattice:new_pattern{
+    action=function(t)
+      ooo.rate(1,rate_seq())
+      ooo.seek(1,pos_current)
+      pattern_trigger:set_division(trigger_division_seq())
+    end,
+    division=1/4,
+  }
+  
+  
+  params:add_option("rate","rate",rates_string,5)
+  params:set_action("rate",function(i)
+    ooo.rate(1,rates[i])  
+  end)
+  
+  params:add_option("step","step",divisions_string,4)
+  params:set_action("step",function(i)
+    pattern_step:set_division(divisions[i])
+  end)
+  
+  params:add_option("trigger","trigger",divisions_string,4)
+  params:set_action("trigger",function(i)
+    pattern_trigger:set_division(divisions[i])
+  end)
+
+  
   lattice:start()
 
   -- keep screen up to date

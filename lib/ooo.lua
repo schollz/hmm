@@ -154,10 +154,10 @@ end
 function ooo.load(i,filename)
   local ch,samples,samplerate=audio.file_info(filename)
   local duration=samples/samplerate
-  ooomem[i].rate_factor=samplerate/48000
-  softcut.buffer_read_stereo(filename,0,ooomem.bnds[j],-1,0,1)
+  ooomem.rate_factor[i]=samplerate/48000
+  softcut.buffer_read_stereo(filename,0,ooomem.bnds[i*2-1],-1,0,1)
   -- add an extra second at the end for the fade
-  softcut.buffer_read_stereo(filename,0,ooomem.bnds[j]+duration,1,0,1)
+  softcut.buffer_read_stereo(filename,0,ooomem.bnds[i*2-1]+duration,1,0,1)
   ooo.loop(i,0,duration)
   ooo.seek(i,0)
   ooo.start(i)
