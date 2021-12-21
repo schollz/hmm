@@ -26,63 +26,47 @@ function init()
   
 
   num_slices=16
-  slices=s{s{1,1,1},1,2,3,s{2,4},5,6,7,8,s{9,1,2},10,s{11,13},12,13,14,15,16}
+  slice_seq=s{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
   rate_seq=s{s{1}:count(16),s{-1,0.5,1},1,1,s{1,0.95,0.9,0.85,0.8,0.75,0.7,0.65,0.6,0.55,0.5,0.45,0.4}:all(),s{1}:count(16),s{-1}:count(4)}
-  trigger_division_seq=s{s{1/4}:count(8),s{1/16}:count(8),s{1/4}:count(12),s{1/32}:count(20)}
-  step_division_seq=s{s{1/4}:count(12),s{1/16}:count(8),s{1/4}:count(4),s{1/2}:count(4),s{1/32}:count(12)}
+  trigger_seq=s{s{1/4}:count(8),s{1/16}:count(8),s{1/4}:count(12),s{1/32}:count(20)}
+  step_seq=s{s{1/4}:count(12),s{1/16}:count(8),s{1/4}:count(4),s{1/2}:count(4),s{1/32}:count(12)}
   
-  divisions={1/32,1/16,1/8,1/4,1/2,1,2}
-  divisions_string={}
-  for _, r in ipairs(divisions) do
-    local s=r
-    if r<1 then 
-      s="1/"..math.floor(1/r)
-    end
-    table.insert(divisions_string,s)
-  end
-  rates={1/16,1/8,1/4,1/2,1,2,4}
-  rates_string={}
-  for _, r in ipairs(rates) do
-    local s=r
-    if r<1 then 
-      s="1/"..math.floor(1/r)
-    end
-    table.insert(rates_string,s)
-  end
+  option_divisions={1/32,1/24,1/16,1/12,1/10,1/8,1/6,1/4,1/3,1/2,1,2,3,4}
+  option_rates={-4,-2,-1.75,-1.5,-1.25,-1,-3/4,-1/2,-1/4,-1/8,-1/16,1/16,1/8,1/4,1/2,3/4,1,1.25,1.5,1.75,2,4}
   
 
   lattice=lattice_:new()
   pos_current=0
   pattern_step=lattice:new_pattern{
     action=function(t)
-      pos_current=(slices()-1)/(num_slices)*current_file_duration
-      pattern_step:set_division(step_division_seq())
+      pos_current=(slice_seq()-1)/(num_slices)*current_file_duration
+      pattern_step:set_division(step_seq())
     end,
     division=1/4,
   }
   pattern_trigger=lattice:new_pattern{
     action=function(t)
-      ooo.rate(1,rate_seq())
       ooo.seek(1,pos_current)
-      pattern_trigger:set_division(trigger_division_seq())
+      ooo.rate(1,rate_seq())
+      pattern_trigger:set_division(trigger_seq())
     end,
     division=1/4,
   }
   
   
-  params:add_option("rate","rate",rates_string,5)
+  params:add_option("rate","rate",option_rates,17)
   params:set_action("rate",function(i)
-    ooo.rate(1,rates[i])  
+    rate_seq=s{option_rates[i]}
   end)
   
-  params:add_option("step","step",divisions_string,4)
+  params:add_option("step","step",option_divisions,11)
   params:set_action("step",function(i)
-    pattern_step:set_division(divisions[i])
+    step_seq=s{option_divisions[i]}
   end)
   
-  params:add_option("trigger","trigger",divisions_string,4)
+  params:add_option("trigger","trigger",option_divisions,11)
   params:set_action("trigger",function(i)
-    pattern_trigger:set_division(divisions[i])
+    trigger_seq=s{option_divisions[i]}
   end)
 
   
